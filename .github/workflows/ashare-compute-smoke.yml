@@ -1,0 +1,28 @@
+name: ashare-compute-smoke
+
+on:
+  push:
+    branches:
+      - scratch/ashare-independent-alpha-compute
+    paths:
+      - ".github/workflows/ashare-compute-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          Path('runner_ok.txt').write_text('runner_ok\n', encoding='utf-8')
+          print('runner_ok')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ashare-compute-smoke
+          path: runner_ok.txt
