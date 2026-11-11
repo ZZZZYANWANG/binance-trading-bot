@@ -1,49 +1,60 @@
-name: ashare-compute-smoke
+name: ashare-index-entry-factor-compute
 
 on:
-  push:
-    branches:
-      - scratch/ashare-independent-alpha-compute
   pull_request:
     branches:
       - master
+    paths:
+      - "scratch/ashare_index_entry_factor_research.py"
+      - ".github/workflows/ashare-compute-smoke.yml"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: ashare-index-entry-factor-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  smoke:
+  research:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Execute and probe private-repository read
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          Path('runner_ok.txt').write_text('runner_ok\n', encoding='utf-8')
-          print('runner_ok')
-          PY
-          code=$(curl -sS -o /tmp/private.json -w '%{http_code}' \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            'https://api.github.com/repos/ZZZZYANWANG/Trade/contents/research/equities/factors/evidence/institutional_event_boundary/index_membership_entry_research.py?ref=research/index-entry-independent-alpha')
-          echo "private_status=$code" | tee private_access.txt
-          if [ "$code" = "200" ]; then
-            python - <<'PY'
-          import base64, json
-          from pathlib import Path
-          payload=json.loads(Path('/tmp/private.json').read_text())
-          Path('private_script.py').write_bytes(base64.b64decode(payload['content']))
-          print('private_script_bytes', Path('private_script.py').stat().st_size)
-          PY
+          python -m pip install --upgrade pip
+          python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 tabulate==0.9.0
+      - name: Static syntax check
+        run: python -m py_compile scratch/ashare_index_entry_factor_research.py
+      - name: Run frozen experiment
+        run: |
+          rm -rf scratch/ashare_index_entry_results
+          python scratch/ashare_index_entry_factor_research.py scratch/ashare_index_entry_results
+      - name: Commit inspectable results to the scratch branch
+        if: github.event_name == 'pull_request'
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add scratch/ashare_index_entry_results
+          if git diff --cached --quiet; then
+            echo "No result changes."
+          else
+            git commit -m "research: persist index-entry decision [skip ci]"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
           fi
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: ashare-compute-smoke
-          path: |
-            runner_ok.txt
-            private_access.txt
-            private_script.py
+          name: ashare-index-entry-factor-results
+          path: scratch/ashare_index_entry_results/**
           if-no-files-found: warn
+          retention-days: 30
