@@ -1,11 +1,11 @@
-name: ashare-index-entry-factor-compute
+name: ashare-index-exit-factor-compute
 
 on:
   pull_request:
     branches:
       - master
     paths:
-      - "scratch/ashare_index_entry_factor_research.py"
+      - "scratch/ashare_index_exit_factor_research.py"
       - ".github/workflows/ashare-compute-smoke.yml"
   workflow_dispatch:
 
@@ -13,13 +13,17 @@ permissions:
   contents: write
 
 concurrency:
-  group: ashare-index-entry-factor-${{ github.event.pull_request.head.ref || github.ref }}
+  group: ashare-index-exit-factor-${{ github.event.pull_request.head.ref || github.ref }}
   cancel-in-progress: true
+
+env:
+  QLIB_PROVIDER_URI: .cache/qlib_cn/data
+  RESULT_DIR: scratch/ashare_index_exit_results
 
 jobs:
   research:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,29 +36,54 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 tabulate==0.9.0
+          python -m pip install pyqlib==0.9.7 numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 tabulate==0.9.0
       - name: Static syntax check
-        run: python -m py_compile scratch/ashare_index_entry_factor_research.py
-      - name: Run frozen experiment
+        run: python -m py_compile scratch/ashare_index_exit_factor_research.py
+      - name: Restore Qlib CN cache
+        id: qlib-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.QLIB_PROVIDER_URI }}
+          key: qlib-cn-daily-2026-11-09-7c796f66
+      - name: Download immutable Qlib CN community release
+        if: steps.qlib-cache.outputs.cache-hit != 'true'
         run: |
-          rm -rf scratch/ashare_index_entry_results
-          python scratch/ashare_index_entry_factor_research.py scratch/ashare_index_entry_results
+          mkdir -p "$QLIB_PROVIDER_URI"
+          curl --fail --location --retry 5 --retry-all-errors \
+            --output /tmp/qlib_bin.tar.gz \
+            https://github.com/chenditc/investment_data/releases/download/2026-11-09/qlib_bin.tar.gz
+          echo "7c796f66efb54053ec84d747cb8cb7612188d4f9c7a8efde6fcf6d3c55260d1c  /tmp/qlib_bin.tar.gz" | sha256sum --check
+          tar -xzf /tmp/qlib_bin.tar.gz -C "$QLIB_PROVIDER_URI" --strip-components=1
+          test -f "$QLIB_PROVIDER_URI/calendars/day.txt"
+          test -f "$QLIB_PROVIDER_URI/instruments/csi300.txt"
+          test -f "$QLIB_PROVIDER_URI/instruments/csi500.txt"
+          test -f "$QLIB_PROVIDER_URI/instruments/csi1000.txt"
+      - name: Run frozen cross-index exit experiment
+        run: |
+          rm -rf "$RESULT_DIR"
+          mkdir -p "$RESULT_DIR"
+          python scratch/ashare_index_exit_factor_research.py \
+            --provider-uri "$QLIB_PROVIDER_URI" \
+            --start 2014-01-01 \
+            --end 2026-10-31 \
+            --output-dir "$RESULT_DIR"
       - name: Commit inspectable results to the scratch branch
         if: github.event_name == 'pull_request'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add scratch/ashare_index_entry_results
+          git add "$RESULT_DIR"
           if git diff --cached --quiet; then
             echo "No result changes."
           else
-            git commit -m "research: persist index-entry decision [skip ci]"
+            git commit -m "research: persist index-exit decision [skip ci]"
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
           fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ashare-index-entry-factor-results
-          path: scratch/ashare_index_entry_results/**
+          name: ashare-index-exit-factor-results
+          path: ${{ env.RESULT_DIR }}/**
           if-no-files-found: warn
           retention-days: 30
+          compression-level: 6
