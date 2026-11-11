@@ -1,0 +1,37 @@
+{
+  "status": "retain_research_only",
+  "selected_candidate": "positive_pre_runup",
+  "factor_id": "CSI300_ENTRY_RUNUP_EXHAUSTION_REVERSAL20",
+  "independent_alpha": false,
+  "default_enabled": false,
+  "direction": "relative_short_long_avoidance",
+  "issue_time": "completed CSI300 effective-session close",
+  "prediction_horizon": "effective session +2 through +20 market-adjusted CAR",
+  "selection_adjustment": -0.09392331476589907,
+  "gates": {
+    "selection_candidate_exists": true,
+    "confirmation_support": true,
+    "final_support": true,
+    "confirmation_target_negative": true,
+    "final_target_negative": true,
+    "confirmation_parent_residual_negative": false,
+    "final_parent_residual_negative": true,
+    "confirmation_complement_difference_negative": false,
+    "final_complement_difference_negative": true,
+    "target_block1_upper_negative": true,
+    "target_block2_upper_negative": true,
+    "residual_block1_upper_negative": false,
+    "residual_block2_upper_negative": false,
+    "complement_block1_upper_negative": false,
+    "complement_block2_upper_negative": false,
+    "all_post_selection_years_negative": true,
+    "final_overlay_mse_positive": false
+  },
+  "limitations": [
+    "public historical event study, not fresh future market-time confirmation",
+    "CSI300 inclusion additions only",
+    "event target is market-adjusted CAR from +2 to +20, not an execution simulation",
+    "no A-share T+1, transaction-cost, borrow, queue, capacity or account certification",
+    "sector and latent selection-rule confounding remain possible"
+  ]
+}

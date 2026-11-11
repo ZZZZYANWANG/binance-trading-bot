@@ -1,0 +1,27 @@
+{
+  "source_url": "https://raw.githubusercontent.com/Leonard-Don/index-inclusion-research/d5bef04b4af42ad04ca3ee64890e89e4656b3889/results/real_tables/cma_gap_event_level.csv",
+  "source_commit": "d5bef04b4af42ad04ca3ee64890e89e4656b3889",
+  "source_sha256": "e412f4bfe27c7f4d789f3c9d25355fb3690bdb0ca5cbaa4fc059161003139cea",
+  "source_blob_sha": "9734e06be24050235806d08c36dcd5db7a248c93",
+  "rows_after_filter": 137,
+  "batches_after_filter": 8,
+  "date_range": [
+    "2020-06-15",
+    "2025-12-12"
+  ],
+  "target": "post_effective_reversal",
+  "candidate_count": 8,
+  "candidate_family": [
+    "all_entry",
+    "positive_pre_runup",
+    "positive_announce_jump",
+    "positive_gap_drift",
+    "positive_effective_jump",
+    "positive_pre_effect_total",
+    "pre_runup_and_gap_drift",
+    "announce_and_gap_positive"
+  ],
+  "selection_rule": "negative development and selection event/batch means plus negative selection expanding-parent residual; choose most negative selection residual",
+  "parent": "expanding Ridge on prior inclusion batches using pre-announcement, announcement, gap, effective-jump and gap-length coordinates",
+  "bootstrap": "moving block bootstrap over chronological inclusion batches, 10000 draws"
+}
