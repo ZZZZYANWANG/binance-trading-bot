@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - scratch/ashare-independent-alpha-compute
-    paths:
-      - ".github/workflows/ashare-compute-smoke.yml"
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
