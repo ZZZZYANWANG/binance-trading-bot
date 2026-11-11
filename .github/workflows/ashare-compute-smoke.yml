@@ -16,14 +16,34 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Execute
+      - name: Execute and probe private-repository read
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python - <<'PY'
           from pathlib import Path
           Path('runner_ok.txt').write_text('runner_ok\n', encoding='utf-8')
           print('runner_ok')
           PY
+          code=$(curl -sS -o /tmp/private.json -w '%{http_code}' \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            'https://api.github.com/repos/ZZZZYANWANG/Trade/contents/research/equities/factors/evidence/institutional_event_boundary/index_membership_entry_research.py?ref=research/index-entry-independent-alpha')
+          echo "private_status=$code" | tee private_access.txt
+          if [ "$code" = "200" ]; then
+            python - <<'PY'
+          import base64, json
+          from pathlib import Path
+          payload=json.loads(Path('/tmp/private.json').read_text())
+          Path('private_script.py').write_bytes(base64.b64decode(payload['content']))
+          print('private_script_bytes', Path('private_script.py').stat().st_size)
+          PY
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: ashare-compute-smoke
-          path: runner_ok.txt
+          path: |
+            runner_ok.txt
+            private_access.txt
+            private_script.py
+          if-no-files-found: warn
