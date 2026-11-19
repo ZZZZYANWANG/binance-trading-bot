@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
-      - name: Apply frozen timing and issuance contracts
+      - name: Apply frozen timing, issuance and account contracts
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -83,6 +83,47 @@ jobs:
                   raise RuntimeError(f"frozen replacement contract not found exactly once: {old}")
               text = text.replace(old, new)
 
+          account_start = text.index('def account(panel, signal, horizon, direction):')
+          account_end = text.index('\n\ndef main():', account_start)
+          account_function = '''def account(panel, signal, horizon, direction):
+    subset = panel[["timestamp", "symbol", signal, "next_ret1"]].dropna().copy()
+    issue = subset.loc[subset["timestamp"].dt.hour.eq(0)].copy()
+    rows = []
+    for timestamp, group in issue.groupby("timestamp", sort=False):
+        if len(group) < 8:
+            continue
+        ranks = rankdata(direction * group[signal].to_numpy(float)) / (len(group) + 1)
+        position = np.zeros(len(group))
+        long = ranks >= .75
+        short = ranks <= .25
+        position[long] = .5 / max(long.sum(), 1)
+        position[short] = -.5 / max(short.sum(), 1)
+        rows.append(pd.DataFrame({"timestamp": timestamp, "symbol": group.symbol.to_numpy(), "position": position}))
+    if not rows:
+        return pd.DataFrame()
+    issue_positions = pd.concat(rows).pivot(index="timestamp", columns="symbol", values="position").fillna(0).sort_index()
+    returns = subset.pivot(index="timestamp", columns="symbol", values="next_ret1").fillna(0).sort_index()
+    columns = sorted(set(issue_positions.columns) | set(returns.columns))
+    returns = returns.reindex(columns=columns, fill_value=0)
+    issued = issue_positions.reindex(index=returns.index, columns=columns, fill_value=0)
+    sleeve_count = max(1, int(math.ceil(horizon / 24)))
+    effective = issued.rolling(horizon, min_periods=1).sum() / sleeve_count
+    turnover = effective.diff().abs().sum(axis=1).fillna(effective.abs().sum(axis=1))
+    gross = (effective * returns).sum(axis=1)
+    output = []
+    for bps in [0, 2, 5, 10]:
+        net = gross - turnover * bps / 10000
+        equity = net.cumsum()
+        drawdown = equity - equity.cummax()
+        annual = float(net.mean() * 24 * 365)
+        vol = float(net.std(ddof=0) * math.sqrt(24 * 365))
+        output.append({"cost_bps": bps, "annual_log_return": annual,
+                       "sharpe": annual / vol if vol > 1e-12 else np.nan,
+                       "max_drawdown": float(drawdown.min()),
+                       "mean_hourly_turnover": float(turnover.mean()), "hours": len(net)})
+    return pd.DataFrame(output)
+'''
+          text = text[:account_start] + account_function + text[account_end:]
           path.write_text(text, encoding="utf-8")
           PY
       - name: Run s-ensemble and Doob-transform validation
