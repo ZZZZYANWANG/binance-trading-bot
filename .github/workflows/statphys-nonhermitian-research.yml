@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/statphys-nonhermitian-research.yml"
       - "research/statphys_nonhermitian/run_research.py"
+      - "research/statphys_nonhermitian/apply_frozen_contracts.py"
   workflow_dispatch:
 
 concurrency:
@@ -32,17 +33,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
+      - name: Apply frozen exceptional-gap contract
+        run: python research/statphys_nonhermitian/apply_frozen_contracts.py
       - name: Run non-Hermitian exceptional-point validation
         env:
           PYTHONHASHSEED: "0"
           NONHERMITIAN_START: "2021-01"
           NONHERMITIAN_END: "2026-10"
         run: python research/statphys_nonhermitian/run_research.py
-      - name: Commit evidence to research branch
+      - name: Commit frozen code and evidence to research branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/statphys_nonhermitian/evidence
+          git add research/statphys_nonhermitian/run_research.py research/statphys_nonhermitian/evidence
           if ! git diff --cached --quiet; then
             git commit -m "research: record non-Hermitian validation evidence [skip research]"
             git push origin HEAD:research/statphys-nonhermitian-20261120
