@@ -1,0 +1,56 @@
+name: statphys-nonhermitian-research
+
+on:
+  push:
+    branches:
+      - research/statphys-nonhermitian-20261120
+    paths:
+      - ".github/workflows/statphys-nonhermitian-research.yml"
+      - "research/statphys_nonhermitian/run_research.py"
+  workflow_dispatch:
+
+concurrency:
+  group: statphys-nonhermitian-20261120
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  research:
+    if: ${{ !contains(github.event.head_commit.message, '[skip research]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
+      - name: Run non-Hermitian exceptional-point validation
+        env:
+          PYTHONHASHSEED: "0"
+          NONHERMITIAN_START: "2021-01"
+          NONHERMITIAN_END: "2026-10"
+        run: python research/statphys_nonhermitian/run_research.py
+      - name: Commit evidence to research branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/statphys_nonhermitian/evidence
+          if ! git diff --cached --quiet; then
+            git commit -m "research: record non-Hermitian validation evidence [skip research]"
+            git push origin HEAD:research/statphys-nonhermitian-20261120
+          fi
+      - name: Upload evidence archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: statphys-nonhermitian-evidence
+          path: research/statphys_nonhermitian/evidence
+          if-no-files-found: error
+          retention-days: 14
