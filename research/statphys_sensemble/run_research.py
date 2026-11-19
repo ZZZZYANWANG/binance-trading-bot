@@ -172,6 +172,7 @@ def prior_z(series: pd.Series, window: int, minimum: int | None = None):
 def features(raw: pd.DataFrame):
     out = pd.DataFrame(index=raw.index)
     log_close = np.log(raw.close.where(raw.close > 0))
+    log_open = np.log(raw.open.where(raw.open > 0))
     ret = log_close.diff()
     activity = np.log1p(raw.quote_volume.clip(lower=0))
     range_state = np.log(raw.high.where(raw.high > 0) / raw.low.where(raw.low > 0))
@@ -196,10 +197,10 @@ def features(raw: pd.DataFrame):
     out["volume_momentum24"] = prior_z(activity.diff(24), 168, 48)
     out["skew168"] = ret.rolling(168, min_periods=72).skew()
     out["kurt168"] = ret.rolling(168, min_periods=72).kurt()
-    out["next_ret1"] = ret.shift(-1)
+    out["next_ret1"] = log_close.shift(-1) - log_open.shift(-1)
     prior_vol = ret.shift(1).rolling(720, min_periods=168).std(ddof=0)
     for h in HORIZONS:
-        target = log_close.shift(-h) - log_close
+        target = log_close.shift(-h) - log_open.shift(-1)
         out[f"yraw{h}"] = target
         out[f"ystd{h}"] = target / (prior_vol * math.sqrt(h) + EPS)
     return out.astype(np.float32)
@@ -500,36 +501,58 @@ def bootstrap(gain, block=30, draws=1999):
 
 
 def account(panel, signal, horizon, direction):
-    subset = panel[["timestamp", "symbol", signal, "next_ret1"]].dropna()
+    subset = panel[["timestamp", "symbol", signal, "next_ret1"]].dropna().copy()
+    issue = subset.loc[subset["timestamp"].dt.hour.eq(0)].copy()
     rows = []
-    for timestamp, group in subset.groupby("timestamp", sort=False):
+    for timestamp, group in issue.groupby("timestamp", sort=False):
         if len(group) < 8:
             continue
         ranks = rankdata(direction * group[signal].to_numpy(float)) / (len(group) + 1)
         position = np.zeros(len(group))
-        long = ranks >= .75; short = ranks <= .25
+        long = ranks >= .75
+        short = ranks <= .25
         position[long] = .5 / max(long.sum(), 1)
         position[short] = -.5 / max(short.sum(), 1)
-        rows.append(pd.DataFrame({"timestamp": timestamp, "symbol": group.symbol.to_numpy(),
-                                  "position": position, "ret": group.next_ret1.to_numpy(float)}))
+        rows.append(pd.DataFrame({
+            "timestamp": timestamp,
+            "symbol": group.symbol.to_numpy(),
+            "position": position,
+        }))
     if not rows:
         return pd.DataFrame()
-    frame = pd.concat(rows)
-    pos = frame.pivot(index="timestamp", columns="symbol", values="position").fillna(0).sort_index()
-    ret = frame.pivot(index="timestamp", columns="symbol", values="ret").reindex(pos.index).fillna(0)
-    effective = pos.rolling(horizon, min_periods=1).mean()
+    issue_positions = (
+        pd.concat(rows)
+        .pivot(index="timestamp", columns="symbol", values="position")
+        .fillna(0)
+        .sort_index()
+    )
+    returns = (
+        subset.pivot(index="timestamp", columns="symbol", values="next_ret1")
+        .fillna(0)
+        .sort_index()
+    )
+    columns = sorted(set(issue_positions.columns) | set(returns.columns))
+    returns = returns.reindex(columns=columns, fill_value=0)
+    issued = issue_positions.reindex(index=returns.index, columns=columns, fill_value=0)
+    sleeve_count = max(1, int(math.ceil(horizon / 24)))
+    effective = issued.rolling(horizon, min_periods=1).sum() / sleeve_count
     turnover = effective.diff().abs().sum(axis=1).fillna(effective.abs().sum(axis=1))
-    gross = (effective * ret).sum(axis=1)
+    gross = (effective * returns).sum(axis=1)
     output = []
     for bps in [0, 2, 5, 10]:
         net = gross - turnover * bps / 10000
-        equity = net.cumsum(); drawdown = equity - equity.cummax()
+        equity = net.cumsum()
+        drawdown = equity - equity.cummax()
         annual = float(net.mean() * 24 * 365)
         vol = float(net.std(ddof=0) * math.sqrt(24 * 365))
-        output.append({"cost_bps": bps, "annual_log_return": annual,
-                       "sharpe": annual / vol if vol > 1e-12 else np.nan,
-                       "max_drawdown": float(drawdown.min()),
-                       "mean_hourly_turnover": float(turnover.mean()), "hours": len(net)})
+        output.append({
+            "cost_bps": bps,
+            "annual_log_return": annual,
+            "sharpe": annual / vol if vol > 1e-12 else np.nan,
+            "max_drawdown": float(drawdown.min()),
+            "mean_hourly_turnover": float(turnover.mean()),
+            "hours": len(net),
+        })
     return pd.DataFrame(output)
 
 
@@ -545,6 +568,8 @@ def main():
     symbols = sorted(panel.symbol.unique())
     amap = {s: i for i, s in enumerate(symbols)}
     panel["asset"] = panel.symbol.map(amap).astype(np.int16)
+    panel_full = panel.copy()
+    panel = panel.loc[panel["timestamp"].dt.hour.eq(0)].copy().reset_index(drop=True)
     candidates = [x for x in panel if x.startswith("candidate__")]
     lower = [x for x in panel if x.startswith("lower__")]
     parents = BASIC_PARENTS + lower
@@ -566,7 +591,7 @@ def main():
                       (dev_direct.devA_n_assets >= 8) & (dev_direct.devB_n_assets >= 8)]
     shortlist = []
     for fam, group in gate.sort_values(["family", "min_oriented_tsic"], ascending=[True, False]).groupby("family"):
-        shortlist.extend(group.head(4).to_dict("records"))
+        shortlist.extend(group.head(2).to_dict("records"))
     shortlist = pd.DataFrame(shortlist)
     shortlist.to_csv(OUT / "development_shortlist.csv", index=False)
     if shortlist.empty:
@@ -582,8 +607,8 @@ def main():
                      (panel.timestamp < start - pd.Timedelta(hours=horizon))).to_numpy()
             test = ((panel.timestamp >= start) & (panel.timestamp <= end)).to_numpy()
             cols = parents + [candidate, f"yraw{horizon}", f"ystd{horizon}"]
-            tr = train & panel[cols].notna().all(axis=1).to_numpy(); te = test & panel[cols].notna().all(axis=1).to_numpy()
-            if tr.sum() < 8000 or te.sum() < 2000:
+            tr = train & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy(); te = test & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy()
+            if tr.sum() < 2500 or te.sum() < 1200:
                 continue
             X0, X1 = panel.loc[tr, parents].to_numpy(np.float32), panel.loc[te, parents].to_numpy(np.float32)
             c0 = direction * panel.loc[tr, candidate].to_numpy(np.float32)
@@ -593,7 +618,7 @@ def main():
             for target in ["raw", "std"]:
                 y0 = panel.loc[tr, f"y{target}{horizon}"].to_numpy(float)
                 y1 = panel.loc[te, f"y{target}{horizon}"].to_numpy(float)
-                for alpha in [10., 100., 1000., 10000., 100000.]:
+                for alpha in [10., 1000., 100000.]:
                     result, _ = ridge(X0, c0, y0, X1, c1, y1, a0, a1, len(symbols), alpha, d1)
                     model_rows.append({"candidate": candidate, "family": claim.family, "horizon": horizon,
                                        "direction": direction, "year": year, "target": target,
@@ -638,8 +663,8 @@ def main():
                          (panel.timestamp < bounds[0] - pd.Timedelta(hours=horizon))).to_numpy()
                 test = mask_period(panel, bounds)
                 cols = controls + [candidate, f"yraw{horizon}", f"ystd{horizon}"]
-                tr = train & panel[cols].notna().all(axis=1).to_numpy(); te = test & panel[cols].notna().all(axis=1).to_numpy()
-                if tr.sum() < 8000 or te.sum() < 1500:
+                tr = train & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy(); te = test & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy()
+                if tr.sum() < 2500 or te.sum() < 1000:
                     continue
                 X0, X1 = panel.loc[tr, controls].to_numpy(np.float32), panel.loc[te, controls].to_numpy(np.float32)
                 c0 = direction * panel.loc[tr, candidate].to_numpy(np.float32)
@@ -658,8 +683,8 @@ def main():
                      (panel.timestamp < bounds[0] - pd.Timedelta(hours=horizon)) & panel.symbol.isin(train_symbols)).to_numpy()
             test = mask_period(panel, bounds) & panel.symbol.isin(heldout).to_numpy()
             cols = parents + [candidate, f"yraw{horizon}", f"ystd{horizon}"]
-            tr = train & panel[cols].notna().all(axis=1).to_numpy(); te = test & panel[cols].notna().all(axis=1).to_numpy()
-            if tr.sum() >= 8000 and te.sum() >= 1000:
+            tr = train & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy(); te = test & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy()
+            if tr.sum() >= 2500 and te.sum() >= 700:
                 X0, X1 = panel.loc[tr, parents].to_numpy(np.float32), panel.loc[te, parents].to_numpy(np.float32)
                 c0 = direction * panel.loc[tr, candidate].to_numpy(np.float32)
                 c1 = direction * panel.loc[te, candidate].to_numpy(np.float32)
@@ -704,7 +729,7 @@ def main():
         account_pass = False
         if model_pass and direct_pass:
             for period in required:
-                frame = account(panel.loc[mask_period(panel, POST[period])], candidate, horizon, float(claim.direction))
+                frame = account(panel_full.loc[mask_period(panel_full, POST[period])], candidate, horizon, float(claim.direction))
                 if not frame.empty:
                     cost_frames.append(frame.assign(candidate=candidate, period=period, horizon=horizon))
             costs = pd.concat(cost_frames, ignore_index=True) if cost_frames else pd.DataFrame()

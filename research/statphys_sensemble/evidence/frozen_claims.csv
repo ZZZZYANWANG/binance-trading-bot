@@ -1,0 +1,4 @@
+candidate,family,horizon,direction,alpha,min_dev_increment,mean_dev_increment
+candidate__doob_entropy__r2v2a2__w720__kl_asymmetric_drive,doob_entropy,1,1.0,100000.0,4.4575670720970265e-07,9.361934176971816e-07
+candidate__dynamic_activity__r2v2a2__w720__activity_gap_drive,dynamic_activity,1,1.0,100000.0,2.3037146762210138e-07,9.488582094832189e-07
+candidate__first_passage_instanton__r2v2a2__w2160__instanton_shift,first_passage_instanton,1,1.0,100000.0,3.711619931256469e-08,3.2900082541395175e-07

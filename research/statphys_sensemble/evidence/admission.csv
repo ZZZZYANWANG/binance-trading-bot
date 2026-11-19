@@ -1,0 +1,4 @@
+candidate,family,horizon,direction,alpha,direct_pass,model_input_pass,cost_pass,admit_model_input,independent_alpha
+candidate__doob_entropy__r2v2a2__w720__kl_asymmetric_drive,doob_entropy,1,1.0,100000.0,True,False,False,False,False
+candidate__dynamic_activity__r2v2a2__w720__activity_gap_drive,dynamic_activity,1,1.0,100000.0,False,False,False,False,False
+candidate__first_passage_instanton__r2v2a2__w2160__instanton_shift,first_passage_instanton,1,1.0,100000.0,True,False,False,False,False
