@@ -1,0 +1,7 @@
+candidate,family,horizon,period,tsic_raw,tsic_std,rankic_raw,rankic_std,n_assets,mean_obs,rankic_days
+candidate__chimera_state__p24__chimera_phase_slip,chimera_state,24,validation,0.015547980186834759,0.010980269986505087,0.0037639955672742554,0.00021017234131988035,12,366.0,366
+candidate__chimera_state__p24__chimera_phase_slip,chimera_state,24,holdout,0.005437564731183896,0.007835095743106734,-0.007383397338719603,-0.008858432934114889,12,365.0,365
+candidate__chimera_state__p24__chimera_phase_slip,chimera_state,24,confirmation,0.006513604157654236,0.0051106952384427804,0.0201388218053823,0.022457796612779444,12,304.0,303
+candidate__synchronization_dynamics__p72__entrainment_energy_transport,synchronization_dynamics,120,validation,0.02777726604061322,0.017319377575916485,-0.009992739500936227,-0.01788375558867362,12,366.0,366
+candidate__synchronization_dynamics__p72__entrainment_energy_transport,synchronization_dynamics,120,holdout,0.013008531821480873,0.013493604946214488,0.00015236465288737122,-0.0028932996579656006,12,365.0,365
+candidate__synchronization_dynamics__p72__entrainment_energy_transport,synchronization_dynamics,120,confirmation,0.04740447352006208,0.044887431550666185,0.03786514488855627,0.04453072011600439,12,304.0,299

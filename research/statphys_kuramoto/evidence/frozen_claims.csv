@@ -1,0 +1,3 @@
+candidate,family,horizon,direction,alpha,min_dev_increment,mean_dev_increment
+candidate__chimera_state__p24__chimera_phase_slip,chimera_state,24,-1.0,100000.0,8.002584724685563e-06,5.403595288778177e-05
+candidate__synchronization_dynamics__p72__entrainment_energy_transport,synchronization_dynamics,120,-1.0,100000.0,4.305279454488509e-05,0.00010142788948925562

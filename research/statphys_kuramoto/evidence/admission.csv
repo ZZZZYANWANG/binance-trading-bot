@@ -1,0 +1,3 @@
+candidate,family,horizon,direction,alpha,direct_pass,model_input_pass,cost_pass,admit_model_input,independent_alpha
+candidate__chimera_state__p24__chimera_phase_slip,chimera_state,24,-1.0,100000.0,True,False,False,False,False
+candidate__synchronization_dynamics__p72__entrainment_energy_transport,synchronization_dynamics,120,-1.0,100000.0,True,False,False,False,False
