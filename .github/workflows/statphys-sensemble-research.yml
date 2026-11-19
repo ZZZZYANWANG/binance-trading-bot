@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
-      - name: Apply pre-label availability and execution-clock fixes
+      - name: Apply frozen timing and issuance contracts
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -63,6 +63,25 @@ jobs:
           if text.count(old_target) != 1:
               raise RuntimeError("forward-target contract not found")
           text = text.replace(old_target, new_target)
+
+          old_issue = '    panel["asset"] = panel.symbol.map(amap).astype(np.int16)\n    candidates = [x for x in panel if x.startswith("candidate__")]'
+          new_issue = '    panel["asset"] = panel.symbol.map(amap).astype(np.int16)\n    panel_full = panel.copy()\n    panel = panel.loc[panel["timestamp"].dt.hour.eq(0)].copy().reset_index(drop=True)\n    candidates = [x for x in panel if x.startswith("candidate__")]'
+          if text.count(old_issue) != 1:
+              raise RuntimeError("daily issuance contract not found")
+          text = text.replace(old_issue, new_issue)
+
+          replacements = {
+              'group.head(4).to_dict("records")': 'group.head(2).to_dict("records")',
+              'for alpha in [10., 100., 1000., 10000., 100000.]': 'for alpha in [10., 1000., 100000.]',
+              'if tr.sum() < 8000 or te.sum() < 2000:': 'if tr.sum() < 2500 or te.sum() < 1200:',
+              'if tr.sum() < 8000 or te.sum() < 1500:': 'if tr.sum() < 2500 or te.sum() < 1000:',
+              'if tr.sum() >= 8000 and te.sum() >= 1000:': 'if tr.sum() >= 2500 and te.sum() >= 700:',
+              'frame = account(panel.loc[mask_period(panel, POST[period])], candidate, horizon, float(claim.direction))': 'frame = account(panel_full.loc[mask_period(panel_full, POST[period])], candidate, horizon, float(claim.direction))',
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise RuntimeError(f"frozen replacement contract not found exactly once: {old}")
+              text = text.replace(old, new)
 
           path.write_text(text, encoding="utf-8")
           PY
