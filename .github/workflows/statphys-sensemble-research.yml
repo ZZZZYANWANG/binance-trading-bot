@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/statphys-sensemble-research.yml"
       - "research/statphys_sensemble/run_research.py"
+      - "research/statphys_sensemble/apply_frozen_contracts.py"
   workflow_dispatch:
 
 concurrency:
@@ -33,106 +34,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
       - name: Apply frozen timing, issuance and account contracts
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path("research/statphys_sensemble/run_research.py")
-          text = path.read_text(encoding="utf-8")
-
-          old_availability = 'tr = train & panel[cols].notna().all(axis=1).to_numpy(); te = test & panel[cols].notna().all(axis=1).to_numpy()'
-          new_availability = 'tr = train & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy(); te = test & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy()'
-          count = text.count(old_availability)
-          if count != 3:
-              raise RuntimeError(f"expected three availability contracts, found {count}")
-          text = text.replace(old_availability, new_availability)
-
-          old_open = '    log_close = np.log(raw.close.where(raw.close > 0))\n    ret = log_close.diff()'
-          new_open = '    log_close = np.log(raw.close.where(raw.close > 0))\n    log_open = np.log(raw.open.where(raw.open > 0))\n    ret = log_close.diff()'
-          if text.count(old_open) != 1:
-              raise RuntimeError("log-open insertion contract not found")
-          text = text.replace(old_open, new_open)
-
-          old_next = '    out["next_ret1"] = ret.shift(-1)'
-          new_next = '    out["next_ret1"] = log_close.shift(-1) - log_open.shift(-1)'
-          if text.count(old_next) != 1:
-              raise RuntimeError("next-hour payment contract not found")
-          text = text.replace(old_next, new_next)
-
-          old_target = '        target = log_close.shift(-h) - log_close'
-          new_target = '        target = log_close.shift(-h) - log_open.shift(-1)'
-          if text.count(old_target) != 1:
-              raise RuntimeError("forward-target contract not found")
-          text = text.replace(old_target, new_target)
-
-          old_issue = '    panel["asset"] = panel.symbol.map(amap).astype(np.int16)\n    candidates = [x for x in panel if x.startswith("candidate__")]'
-          new_issue = '    panel["asset"] = panel.symbol.map(amap).astype(np.int16)\n    panel_full = panel.copy()\n    panel = panel.loc[panel["timestamp"].dt.hour.eq(0)].copy().reset_index(drop=True)\n    candidates = [x for x in panel if x.startswith("candidate__")]'
-          if text.count(old_issue) != 1:
-              raise RuntimeError("daily issuance contract not found")
-          text = text.replace(old_issue, new_issue)
-
-          replacements = {
-              'group.head(4).to_dict("records")': 'group.head(2).to_dict("records")',
-              'for alpha in [10., 100., 1000., 10000., 100000.]': 'for alpha in [10., 1000., 100000.]',
-              'if tr.sum() < 8000 or te.sum() < 2000:': 'if tr.sum() < 2500 or te.sum() < 1200:',
-              'if tr.sum() < 8000 or te.sum() < 1500:': 'if tr.sum() < 2500 or te.sum() < 1000:',
-              'if tr.sum() >= 8000 and te.sum() >= 1000:': 'if tr.sum() >= 2500 and te.sum() >= 700:',
-              'frame = account(panel.loc[mask_period(panel, POST[period])], candidate, horizon, float(claim.direction))': 'frame = account(panel_full.loc[mask_period(panel_full, POST[period])], candidate, horizon, float(claim.direction))',
-          }
-          for old, new in replacements.items():
-              if text.count(old) != 1:
-                  raise RuntimeError(f"frozen replacement contract not found exactly once: {old}")
-              text = text.replace(old, new)
-
-          account_start = text.index('def account(panel, signal, horizon, direction):')
-          account_end = text.index('\n\ndef main():', account_start)
-          account_function = '''def account(panel, signal, horizon, direction):
-    subset = panel[["timestamp", "symbol", signal, "next_ret1"]].dropna().copy()
-    issue = subset.loc[subset["timestamp"].dt.hour.eq(0)].copy()
-    rows = []
-    for timestamp, group in issue.groupby("timestamp", sort=False):
-        if len(group) < 8:
-            continue
-        ranks = rankdata(direction * group[signal].to_numpy(float)) / (len(group) + 1)
-        position = np.zeros(len(group))
-        long = ranks >= .75
-        short = ranks <= .25
-        position[long] = .5 / max(long.sum(), 1)
-        position[short] = -.5 / max(short.sum(), 1)
-        rows.append(pd.DataFrame({"timestamp": timestamp, "symbol": group.symbol.to_numpy(), "position": position}))
-    if not rows:
-        return pd.DataFrame()
-    issue_positions = pd.concat(rows).pivot(index="timestamp", columns="symbol", values="position").fillna(0).sort_index()
-    returns = subset.pivot(index="timestamp", columns="symbol", values="next_ret1").fillna(0).sort_index()
-    columns = sorted(set(issue_positions.columns) | set(returns.columns))
-    returns = returns.reindex(columns=columns, fill_value=0)
-    issued = issue_positions.reindex(index=returns.index, columns=columns, fill_value=0)
-    sleeve_count = max(1, int(math.ceil(horizon / 24)))
-    effective = issued.rolling(horizon, min_periods=1).sum() / sleeve_count
-    turnover = effective.diff().abs().sum(axis=1).fillna(effective.abs().sum(axis=1))
-    gross = (effective * returns).sum(axis=1)
-    output = []
-    for bps in [0, 2, 5, 10]:
-        net = gross - turnover * bps / 10000
-        equity = net.cumsum()
-        drawdown = equity - equity.cummax()
-        annual = float(net.mean() * 24 * 365)
-        vol = float(net.std(ddof=0) * math.sqrt(24 * 365))
-        output.append({"cost_bps": bps, "annual_log_return": annual,
-                       "sharpe": annual / vol if vol > 1e-12 else np.nan,
-                       "max_drawdown": float(drawdown.min()),
-                       "mean_hourly_turnover": float(turnover.mean()), "hours": len(net)})
-    return pd.DataFrame(output)
-'''
-          text = text[:account_start] + account_function + text[account_end:]
-          path.write_text(text, encoding="utf-8")
-          PY
+        run: python research/statphys_sensemble/apply_frozen_contracts.py
       - name: Run s-ensemble and Doob-transform validation
         env:
           PYTHONHASHSEED: "0"
           SENSEMBLE_START: "2021-01"
           SENSEMBLE_END: "2026-10"
         run: python research/statphys_sensemble/run_research.py
-      - name: Commit code fixes and evidence to research branch
+      - name: Commit frozen code and evidence to research branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
