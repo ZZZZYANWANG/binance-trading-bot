@@ -1,0 +1,4 @@
+candidate,family,horizon,direction,alpha,direct_pass,model_input_pass,cost_pass,admit_model_input,independent_alpha
+candidate__intermittency_response__w2160__intermittency_momentum,intermittency_response,1,1.0,100000.0,False,False,False,False,False
+candidate__multiplier_geometry__w2160__concavity_transport,multiplier_geometry,1,1.0,100000.0,False,False,False,False,False
+candidate__roughness_response__w720__holder_transition_transport,roughness_response,480,1.0,100000.0,False,False,False,False,False

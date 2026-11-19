@@ -1,0 +1,4 @@
+candidate,family,horizon,direction,alpha,min_dev_increment,mean_dev_increment
+candidate__intermittency_response__w2160__intermittency_momentum,intermittency_response,1,1.0,100000.0,3.963053974110607e-06,3.1036780423996503e-05
+candidate__multiplier_geometry__w2160__concavity_transport,multiplier_geometry,1,1.0,100000.0,3.940519271194427e-06,3.102616075032943e-05
+candidate__roughness_response__w720__holder_transition_transport,roughness_response,480,1.0,100000.0,2.6036206504275068e-05,0.00020697407764340826

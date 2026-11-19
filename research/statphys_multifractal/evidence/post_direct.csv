@@ -1,0 +1,10 @@
+candidate,family,horizon,period,tsic_raw,tsic_std,rankic_raw,rankic_std,n_assets,mean_obs,rankic_days
+candidate__intermittency_response__w2160__intermittency_momentum,intermittency_response,1,validation,0.08437418069845819,0.09528248817335234,-0.03588361585829978,-0.030820607526840172,12,366.0,366
+candidate__intermittency_response__w2160__intermittency_momentum,intermittency_response,1,holdout,0.03610652946298845,0.02794094187527091,-0.028305542619625406,-0.023754196334173965,12,365.0,365
+candidate__intermittency_response__w2160__intermittency_momentum,intermittency_response,1,confirmation,-0.02801613858183555,-0.012454291033383557,0.011009278681206523,-0.0014768963916612706,12,304.0,304
+candidate__multiplier_geometry__w2160__concavity_transport,multiplier_geometry,1,validation,0.08440478960390728,0.09530265737292098,-0.03561612378752903,-0.03095435356222555,12,366.0,366
+candidate__multiplier_geometry__w2160__concavity_transport,multiplier_geometry,1,holdout,0.036106529504409325,0.02794094192951659,-0.028305542619625406,-0.023754196334173965,12,365.0,365
+candidate__multiplier_geometry__w2160__concavity_transport,multiplier_geometry,1,confirmation,-0.0280487745506529,-0.012486927126005867,0.010687232306528566,-0.001798942766339225,12,304.0,304
+candidate__roughness_response__w720__holder_transition_transport,roughness_response,480,validation,-0.01650536446307515,-0.026317320924484414,-0.010761959221963541,0.003778647846435286,12,366.0,366
+candidate__roughness_response__w720__holder_transition_transport,roughness_response,480,holdout,-0.014411297270689405,-0.019370263339687287,-0.011294270824224236,0.007289272671688678,12,365.0,365
+candidate__roughness_response__w720__holder_transition_transport,roughness_response,480,confirmation,0.06079102111644035,0.06352055446930786,0.06955455632411797,0.05958216969601998,12,304.0,284
