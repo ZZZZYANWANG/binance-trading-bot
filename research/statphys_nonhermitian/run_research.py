@@ -240,7 +240,7 @@ def operator_metrics(operator: np.ndarray, current: np.ndarray, activity: np.nda
     numerical_abscissa = float(np.max(np.linalg.eigvalsh(hermitian_part)))
     henrici = float(math.sqrt(max(np.linalg.norm(operator, "fro") ** 2 - np.sum(np.abs(values) ** 2), 0.0)))
     pairwise = np.abs(values[:, None] - values[None, :])
-    pairwise += np.eye(n) * np.inf
+    np.fill_diagonal(pairwise, np.inf)
     pair_index = np.unravel_index(np.argmin(pairwise), pairwise.shape)
     exceptional_gap = float(pairwise[pair_index] / (np.linalg.norm(operator, 2) + EPS))
 
