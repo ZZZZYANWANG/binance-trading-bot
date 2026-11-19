@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/statphys-hawkes-omori-research.yml"
       - "research/statphys_hawkes_omori/run_research.py"
+      - "research/statphys_hawkes_omori/apply_frozen_contracts.py"
   workflow_dispatch:
 
 concurrency:
@@ -32,17 +33,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
+      - name: Apply frozen binary market-event contract
+        run: python research/statphys_hawkes_omori/apply_frozen_contracts.py
       - name: Run signed Hawkes and Omori validation
         env:
           PYTHONHASHSEED: "0"
           HAWKES_START: "2021-01"
           HAWKES_END: "2026-10"
         run: python research/statphys_hawkes_omori/run_research.py
-      - name: Commit evidence to research branch
+      - name: Commit frozen code and evidence to research branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/statphys_hawkes_omori/evidence
+          git add research/statphys_hawkes_omori/run_research.py research/statphys_hawkes_omori/evidence
           if ! git diff --cached --quiet; then
             git commit -m "research: record Hawkes-Omori validation evidence [skip research]"
             git push origin HEAD:research/statphys-hawkes-omori-20261120
