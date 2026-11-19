@@ -1,0 +1,4 @@
+candidate,family,horizon,direction,alpha,min_dev_increment,mean_dev_increment
+candidate__first_passage_absorption__w2160__committor_change_transport,first_passage_absorption,24,1.0,100000.0,0.00012715394625054677,0.00047817435222017744
+candidate__percolation_cluster__w2160__cluster_fragmentation_reversal,percolation_cluster,480,1.0,100000.0,7.400001093577744e-06,1.7838536758439847e-05
+candidate__rare_region_dynamics__w2160__critical_rejuvenation,rare_region_dynamics,24,-1.0,100000.0,0.0001738090912721823,0.0004621931278875948

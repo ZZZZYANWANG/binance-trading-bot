@@ -1,0 +1,10 @@
+candidate,family,horizon,period,tsic_raw,tsic_std,rankic_raw,rankic_std,n_assets,mean_obs,rankic_days
+candidate__first_passage_absorption__w2160__committor_change_transport,first_passage_absorption,24,validation,0.0374441956280483,0.037408013876590415,-0.021109510949593156,-0.014137914150048605,20,366.0,366
+candidate__first_passage_absorption__w2160__committor_change_transport,first_passage_absorption,24,holdout,-0.026523827753170276,-0.022328225440694884,-0.009706044727145667,-0.01089300865194725,20,365.0,365
+candidate__first_passage_absorption__w2160__committor_change_transport,first_passage_absorption,24,confirmation,0.01901130970035474,0.02660557139963098,0.012079978417677486,0.01197748757534735,20,304.0,303
+candidate__percolation_cluster__w2160__cluster_fragmentation_reversal,percolation_cluster,480,validation,-0.02442654282773708,-0.027844623664928663,-0.008918562867699147,0.0027441459659879,20,366.0,366
+candidate__percolation_cluster__w2160__cluster_fragmentation_reversal,percolation_cluster,480,holdout,-0.005144051737443613,-0.009845459367586087,-0.006308870144548898,-0.013178731097434773,20,365.0,365
+candidate__percolation_cluster__w2160__cluster_fragmentation_reversal,percolation_cluster,480,confirmation,-0.02040477385609215,-0.019639432881854928,-0.04083155526209347,-0.05306576299904691,20,304.0,284
+candidate__rare_region_dynamics__w2160__critical_rejuvenation,rare_region_dynamics,24,validation,0.023016683985619745,0.024476976078017375,-0.01708204621504119,-0.010932141520664754,20,366.0,366
+candidate__rare_region_dynamics__w2160__critical_rejuvenation,rare_region_dynamics,24,holdout,-0.029621270763347383,-0.031325371281672065,-0.011737690223248188,-0.011293217907181989,20,365.0,365
+candidate__rare_region_dynamics__w2160__critical_rejuvenation,rare_region_dynamics,24,confirmation,0.0026451826781310433,0.010120823382666224,0.008594528431779595,0.007758132180966057,20,304.0,303

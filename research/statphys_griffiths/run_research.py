@@ -269,7 +269,8 @@ def network_coordinates(ret_z: np.ndarray, act_z: np.ndarray, window: int, issue
         a = act_z[t-window:t]
         event = ((np.abs(r) > 1.0) & (a > 0)).astype(float)
         event[~np.isfinite(r) | ~np.isfinite(a)] = np.nan
-        current = event[-1]
+        current = ((np.abs(ret_z[t]) > 1.0) & (act_z[t] > 0)).astype(float)
+        current[~np.isfinite(ret_z[t]) | ~np.isfinite(act_z[t])] = np.nan
         valid_asset = np.isfinite(event).sum(axis=0) >= int(0.75 * window)
         index = np.flatnonzero(valid_asset)
         if len(index) < 10:

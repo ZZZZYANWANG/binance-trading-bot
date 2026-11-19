@@ -1,0 +1,4 @@
+candidate,family,horizon,direction,alpha,direct_pass,model_input_pass,cost_pass,admit_model_input,independent_alpha
+candidate__first_passage_absorption__w2160__committor_change_transport,first_passage_absorption,24,1.0,100000.0,False,False,False,False,False
+candidate__percolation_cluster__w2160__cluster_fragmentation_reversal,percolation_cluster,480,1.0,100000.0,False,False,False,False,False
+candidate__rare_region_dynamics__w2160__critical_rejuvenation,rare_region_dynamics,24,-1.0,100000.0,False,False,False,False,False
