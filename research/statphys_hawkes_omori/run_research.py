@@ -65,7 +65,7 @@ FORMULAS = {
     "omori_entropy_transport": "omori_aftershock",
     "intensity_acceleration": "intensity_dynamics",
     "critical_intensity_acceleration": "intensity_dynamics",
-]
+}
 BASIC_PARENTS = [
     "ret1", "mom4", "mom24", "mom72", "mom168", "mom480",
     "vol24", "vol72", "vol168", "vol720", "ret_z168", "absret_z168",
@@ -294,7 +294,7 @@ def account(panel, signal, horizon, direction):
 
 
 def main():
-    started = time.time(); raw_data, audit = load_data(); base_by_symbol = {symbol: base_features(frame) for symbol, frame in raw_data.items()}; symbols = sorted(base_by_symbol); timeline = pd.date_range(min(x.index.min() for x in base_by_symbol.values()), max(x.index.max() for x in base_by_symbol.values()), freq="h", tz="UTC"); ret_z = np.column_stack([base_by_symbol[s].ret_z168.reindex(timeline).to_numpy(float) for s in symbols]); act_z = np.column_stack([base_by_symbol[s].activity_z168.reindex(timeline).to_numpy(float) for s in symbols]); pos_matrix = ((ret_z > 1.5) & (act_z > 0)).astype(float); neg_matrix = ((ret_z < -1.5) & (act_z > 0)).astype(float); invalid = ~np.isfinite(ret_z) | ~np.isfinite(act_z); pos_matrix[invalid] = np.nan; neg_matrix[invalid] = np.nan; market_pos = np.nanmean(pos_matrix, axis=1); market_neg = np.nanmean(neg_matrix, axis=1); issue_indices = np.flatnonzero(timeline.hour == 0); issue_time = timeline[issue_indices]; issue_rows, full_rows = [], []
+    started = time.time(); raw_data, audit = load_data(); base_by_symbol = {symbol: base_features(frame) for symbol, frame in raw_data.items()}; symbols = sorted(base_by_symbol); timeline = pd.date_range(min(x.index.min() for x in base_by_symbol.values()), max(x.index.max() for x in base_by_symbol.values()), freq="h", tz="UTC"); ret_z = np.column_stack([base_by_symbol[s].ret_z168.reindex(timeline).to_numpy(float) for s in symbols]); act_z = np.column_stack([base_by_symbol[s].activity_z168.reindex(timeline).to_numpy(float) for s in symbols]); pos_matrix = ((ret_z > 1.5) & (act_z > 0)).astype(float); neg_matrix = ((ret_z < -1.5) & (act_z > 0)).astype(float); invalid = ~np.isfinite(ret_z) | ~np.isfinite(act_z); pos_matrix[invalid] = np.nan; neg_matrix[invalid] = np.nan; market_pos = (np.nanmean(pos_matrix, axis=1) >= 0.20).astype(float); market_neg = (np.nanmean(neg_matrix, axis=1) >= 0.20).astype(float); issue_indices = np.flatnonzero(timeline.hour == 0); issue_time = timeline[issue_indices]; issue_rows, full_rows = [], []
     for asset, symbol in enumerate(symbols):
         issue = base_by_symbol[symbol].reindex(issue_time).copy(); lower_parts, candidate_parts = {}, {}
         for window in WINDOWS:

@@ -1,0 +1,5 @@
+candidate,family,horizon,direction,alpha,min_dev_increment,mean_dev_increment
+candidate__hawkes_criticality__w2160__omori_signed_intensity,hawkes_criticality,4,-1.0,100000.0,1.5014578620564827e-06,4.496851474916388e-06
+candidate__market_contagion__w720__market_contagion_transport,market_contagion,120,-1.0,100000.0,7.847990297147693e-05,0.00022251479838804973
+candidate__omori_aftershock__w2160__extinction_barrier_transport,omori_aftershock,4,-1.0,100000.0,1.09861217151173e-06,3.4740369140926086e-06
+candidate__signed_branching__w720__productivity_asymmetry_transport,signed_branching,120,-1.0,100000.0,1.4450345083059713e-05,6.437566967076529e-05

@@ -1,0 +1,5 @@
+candidate,family,horizon,direction,alpha,direct_pass,model_input_pass,cost_pass,admit_model_input,independent_alpha
+candidate__hawkes_criticality__w2160__omori_signed_intensity,hawkes_criticality,4,-1.0,100000.0,False,False,False,False,False
+candidate__market_contagion__w720__market_contagion_transport,market_contagion,120,-1.0,100000.0,False,False,False,False,False
+candidate__omori_aftershock__w2160__extinction_barrier_transport,omori_aftershock,4,-1.0,100000.0,False,False,False,False,False
+candidate__signed_branching__w720__productivity_asymmetry_transport,signed_branching,120,-1.0,100000.0,False,False,False,False,False

@@ -1,0 +1,13 @@
+candidate,family,horizon,period,tsic_raw,tsic_std,rankic_raw,rankic_std,n_assets,mean_obs,rankic_days
+candidate__hawkes_criticality__w2160__omori_signed_intensity,hawkes_criticality,4,validation,0.05121592255201227,0.042503090431820205,-0.007093671034013247,-0.012482670815819814,12,366.0,366
+candidate__hawkes_criticality__w2160__omori_signed_intensity,hawkes_criticality,4,holdout,-0.012069569851734388,-0.013602602266190263,-0.01992501153754592,-0.020768239240353984,12,365.0,365
+candidate__hawkes_criticality__w2160__omori_signed_intensity,hawkes_criticality,4,confirmation,-0.022653236676069565,-0.009872870552797187,-0.01628315984706977,-0.002642881011159418,12,304.0,304
+candidate__market_contagion__w720__market_contagion_transport,market_contagion,120,validation,0.014793936735519325,0.01392559541393004,0.0017769116129771954,0.0032099048492491167,12,366.0,366
+candidate__market_contagion__w720__market_contagion_transport,market_contagion,120,holdout,-0.04529441148025697,-0.04208805445156185,-0.05699897211879174,-0.04939301391204579,12,365.0,365
+candidate__market_contagion__w720__market_contagion_transport,market_contagion,120,confirmation,-0.02748715442567805,-0.010837935928521806,0.019102462143136587,0.04025843278005124,12,304.0,299
+candidate__omori_aftershock__w2160__extinction_barrier_transport,omori_aftershock,4,validation,0.046233060114714696,0.03779836410763355,-0.0006928328815094895,-0.007553444144022716,12,366.0,366
+candidate__omori_aftershock__w2160__extinction_barrier_transport,omori_aftershock,4,holdout,-0.017304509531504007,-0.021387882088916566,-0.011676574538394291,-0.011638525353564149,12,365.0,365
+candidate__omori_aftershock__w2160__extinction_barrier_transport,omori_aftershock,4,confirmation,-0.03856770478252525,-0.029098608872932058,-0.009270012357430284,0.0040942670501060265,12,304.0,304
+candidate__signed_branching__w720__productivity_asymmetry_transport,signed_branching,120,validation,-0.0261313368232587,-0.02463884608356576,-0.026331742616765054,-0.030352488037583662,12,366.0,366
+candidate__signed_branching__w720__productivity_asymmetry_transport,signed_branching,120,holdout,-0.003668883561073101,-0.0026582433828957644,-0.04560783363205024,-0.037235451329137075,12,365.0,365
+candidate__signed_branching__w720__productivity_asymmetry_transport,signed_branching,120,confirmation,-0.010389112511425729,-0.0015678829892409006,-0.06055547689247541,-0.040845427544094426,12,304.0,299
