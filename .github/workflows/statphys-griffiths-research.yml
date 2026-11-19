@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/statphys-griffiths-research.yml"
       - "research/statphys_griffiths/run_research.py"
+      - "research/statphys_griffiths/apply_frozen_contracts.py"
   workflow_dispatch:
 
 concurrency:
@@ -32,17 +33,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
+      - name: Apply frozen state-clock contract
+        run: python research/statphys_griffiths/apply_frozen_contracts.py
       - name: Run Griffiths and absorbing-state validation
         env:
           PYTHONHASHSEED: "0"
           GRIFFITHS_START: "2021-01"
           GRIFFITHS_END: "2026-10"
         run: python research/statphys_griffiths/run_research.py
-      - name: Commit evidence to research branch
+      - name: Commit frozen code and evidence to research branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/statphys_griffiths/evidence
+          git add research/statphys_griffiths/run_research.py research/statphys_griffiths/evidence
           if ! git diff --cached --quiet; then
             git commit -m "research: record Griffiths validation evidence [skip research]"
             git push origin HEAD:research/statphys-griffiths-20261119
