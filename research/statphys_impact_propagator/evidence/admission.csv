@@ -1,0 +1,3 @@
+candidate,family,horizon,direction,alpha,direct_pass,model_input_pass,cost_pass,admit_model_input,independent_alpha
+candidate__critical_diffusivity__w720__flow_memory_transport,critical_diffusivity,1,-1.0,100000.0,False,False,False,False,False
+candidate__critical_diffusivity__w2160__impact_decay_transport,critical_diffusivity,1,-1.0,100000.0,False,False,False,False,False

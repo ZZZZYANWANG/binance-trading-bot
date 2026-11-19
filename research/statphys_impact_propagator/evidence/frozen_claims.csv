@@ -1,0 +1,3 @@
+candidate,family,horizon,direction,alpha,min_dev_increment,mean_dev_increment
+candidate__critical_diffusivity__w720__flow_memory_transport,critical_diffusivity,1,-1.0,100000.0,1.2185201124515388e-06,5.213214916939726e-06
+candidate__critical_diffusivity__w2160__impact_decay_transport,critical_diffusivity,1,-1.0,100000.0,2.4337824068249613e-07,5.6940485226235286e-06

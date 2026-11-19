@@ -1,0 +1,7 @@
+candidate,family,horizon,period,tsic_raw,tsic_std,rankic_raw,rankic_std,n_assets,mean_obs,rankic_days
+candidate__critical_diffusivity__w720__flow_memory_transport,critical_diffusivity,1,validation,-0.012467188177254987,-0.022958333145196432,-0.003544655083721652,-0.007193877228264907,12,366.0,366
+candidate__critical_diffusivity__w720__flow_memory_transport,critical_diffusivity,1,holdout,0.012354620842725804,0.010097278767155243,0.020080700879055956,0.031365340266923065,12,365.0,365
+candidate__critical_diffusivity__w720__flow_memory_transport,critical_diffusivity,1,confirmation,-0.005603540086333969,-0.020144220021295605,0.005055757661077263,0.0003642576559296572,12,304.0,304
+candidate__critical_diffusivity__w2160__impact_decay_transport,critical_diffusivity,1,validation,-0.03767448365356762,-0.047052947013620734,-0.009015457368899726,-0.014231921149459972,12,366.0,366
+candidate__critical_diffusivity__w2160__impact_decay_transport,critical_diffusivity,1,holdout,0.02740449386117851,0.02613525585321001,0.019456978017358458,0.020491996449131807,12,365.0,365
+candidate__critical_diffusivity__w2160__impact_decay_transport,critical_diffusivity,1,confirmation,-0.008276259199064096,-0.013747953773349942,0.007926184530880637,-0.0024928605999944725,12,304.0,304
