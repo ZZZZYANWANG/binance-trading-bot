@@ -9,6 +9,10 @@ on:
       - "research/statphys_sensemble/run_research.py"
   workflow_dispatch:
 
+concurrency:
+  group: statphys-sensemble-20261119
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
