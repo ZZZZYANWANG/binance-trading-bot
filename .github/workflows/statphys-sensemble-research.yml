@@ -28,18 +28,39 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "numpy>=1.26,<3" "pandas>=2.2,<3" "scipy>=1.12,<2" "requests>=2.31,<3"
-      - name: Apply pre-label availability fix
+      - name: Apply pre-label availability and execution-clock fixes
         run: |
           python - <<'PY'
           from pathlib import Path
           path = Path("research/statphys_sensemble/run_research.py")
           text = path.read_text(encoding="utf-8")
-          old = 'tr = train & panel[cols].notna().all(axis=1).to_numpy(); te = test & panel[cols].notna().all(axis=1).to_numpy()'
-          new = 'tr = train & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy(); te = test & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy()'
-          count = text.count(old)
+
+          old_availability = 'tr = train & panel[cols].notna().all(axis=1).to_numpy(); te = test & panel[cols].notna().all(axis=1).to_numpy()'
+          new_availability = 'tr = train & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy(); te = test & panel[[candidate, f"yraw{horizon}", f"ystd{horizon}"]].notna().all(axis=1).to_numpy()'
+          count = text.count(old_availability)
           if count != 3:
               raise RuntimeError(f"expected three availability contracts, found {count}")
-          path.write_text(text.replace(old, new), encoding="utf-8")
+          text = text.replace(old_availability, new_availability)
+
+          old_open = '    log_close = np.log(raw.close.where(raw.close > 0))\n    ret = log_close.diff()'
+          new_open = '    log_close = np.log(raw.close.where(raw.close > 0))\n    log_open = np.log(raw.open.where(raw.open > 0))\n    ret = log_close.diff()'
+          if text.count(old_open) != 1:
+              raise RuntimeError("log-open insertion contract not found")
+          text = text.replace(old_open, new_open)
+
+          old_next = '    out["next_ret1"] = ret.shift(-1)'
+          new_next = '    out["next_ret1"] = log_close.shift(-1) - log_open.shift(-1)'
+          if text.count(old_next) != 1:
+              raise RuntimeError("next-hour payment contract not found")
+          text = text.replace(old_next, new_next)
+
+          old_target = '        target = log_close.shift(-h) - log_close'
+          new_target = '        target = log_close.shift(-h) - log_open.shift(-1)'
+          if text.count(old_target) != 1:
+              raise RuntimeError("forward-target contract not found")
+          text = text.replace(old_target, new_target)
+
+          path.write_text(text, encoding="utf-8")
           PY
       - name: Run s-ensemble and Doob-transform validation
         env:
@@ -47,7 +68,7 @@ jobs:
           SENSEMBLE_START: "2021-01"
           SENSEMBLE_END: "2026-10"
         run: python research/statphys_sensemble/run_research.py
-      - name: Commit code fix and evidence to research branch
+      - name: Commit code fixes and evidence to research branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
